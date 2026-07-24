@@ -13,11 +13,17 @@ define('APP_NAME',  'Nexu Hosting');
 define('APP_URL',   rtrim(getenv('APP_URL') ?: 'https://nexuhosting.com', '/'));
 
 // ── Base de datos ─────────────────────────────────────────────
-define('DB_HOST',    getenv('DB_HOST')    ?: 'localhost');
-define('DB_PORT',    getenv('DB_PORT')    ?: '3306');
-define('DB_NAME',    getenv('DB_NAME')    ?: 'nexuhosting');
-define('DB_USER',    getenv('DB_USER')    ?: 'root');
-define('DB_PASS',    getenv('DB_PASS')    ?: '');
+$db_host = $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? getenv('DB_HOST') ?: 'bcd5w0wuqpzy7rqbcfw-mysql.services.clever-cloud.com';
+$db_port = $_ENV['DB_PORT'] ?? $_SERVER['DB_PORT'] ?? getenv('DB_PORT') ?: '3306';
+$db_name = $_ENV['DB_NAME'] ?? $_SERVER['DB_NAME'] ?? getenv('DB_NAME') ?: 'bcd5w0wuqpzy7rqbcfw';
+$db_user = $_ENV['DB_USER'] ?? $_SERVER['DB_USER'] ?? getenv('DB_USER') ?: 'udtolymxjjotggmt';
+$db_pass = $_ENV['DB_PASS'] ?? $_SERVER['DB_PASS'] ?? getenv('DB_PASS') ?: 'mHJPYaMpaFOtxDdA1DlG';
+
+define('DB_HOST',    $db_host);
+define('DB_PORT',    $db_port);
+define('DB_NAME',    $db_name);
+define('DB_USER',    $db_user);
+define('DB_PASS',    $db_pass);
 define('DB_CHARSET', 'utf8mb4');
 
 // ── Sesiones ──────────────────────────────────────────────────
