@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libpng-dev \
         libjpeg-dev \
         libfreetype6-dev \
+        libonig-dev \
         unzip \
         curl \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
@@ -31,15 +32,15 @@ RUN a2enmod rewrite headers
 RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
 
 # ── Ajustes PHP críticos ──────────────────────────────────────
-RUN echo "upload_max_filesize = 12M"       >> /usr/local/etc/php/php.ini \
- && echo "post_max_size = 14M"             >> /usr/local/etc/php/php.ini \
- && echo "memory_limit = 128M"             >> /usr/local/etc/php/php.ini \
- && echo "max_execution_time = 60"         >> /usr/local/etc/php/php.ini \
- && echo "session.cookie_httponly = 1"     >> /usr/local/etc/php/php.ini \
+RUN echo "upload_max_filesize = 12M"        >> /usr/local/etc/php/php.ini \
+ && echo "post_max_size = 14M"              >> /usr/local/etc/php/php.ini \
+ && echo "memory_limit = 128M"              >> /usr/local/etc/php/php.ini \
+ && echo "max_execution_time = 60"          >> /usr/local/etc/php/php.ini \
+ && echo "session.cookie_httponly = 1"      >> /usr/local/etc/php/php.ini \
  && echo "session.cookie_samesite = Strict" >> /usr/local/etc/php/php.ini \
- && echo "expose_php = Off"                >> /usr/local/etc/php/php.ini \
- && echo "display_errors = Off"            >> /usr/local/etc/php/php.ini \
- && echo "log_errors = On"                 >> /usr/local/etc/php/php.ini
+ && echo "expose_php = Off"                 >> /usr/local/etc/php/php.ini \
+ && echo "display_errors = Off"             >> /usr/local/etc/php/php.ini \
+ && echo "log_errors = On"                  >> /usr/local/etc/php/php.ini
 
 # ── Configurar Apache para que el .htaccess funcione ─────────
 RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
@@ -55,7 +56,7 @@ RUN mkdir -p /var/www/html/uploads/vouchers \
     && chmod -R 755 /var/www/html/uploads \
     && chmod -R 755 /var/www/html/logs
 
-# ── Render usa el puerto 10000 por defecto ────────────────────
+# ── Puerto para Apache ────────────────────────────────────────
 EXPOSE 80
 
 CMD ["apache2-foreground"]
