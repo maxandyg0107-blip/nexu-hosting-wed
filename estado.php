@@ -4,7 +4,8 @@
  */
 require_once __DIR__ . '/config/bootstrap.php';
 
-$stmt    = db()->query("SELECT * FROM service_status ORDER BY type DESC, name ASC");
+$stmt = db()->prepare("SELECT * FROM service_status ORDER BY type DESC, name ASC");
+$stmt->execute();
 $services = $stmt->fetchAll();
 
 $statusMap = [
@@ -33,13 +34,14 @@ $page_title = 'Estado del Sistema';
           <?= $allOk ? 'Todos los sistemas operacionales' : 'Algunos sistemas con incidencias' ?>
         </span>
       </div>
-      <p class="text-gray-500 text-sm">Última actualización: <?= date('d/m/Y H:i') ?> (Hora Lima)</p>
+      <p class="text-gray-500 text-sm">Última actualización: <?= e(date('d/m/Y H:i')) ?> (Hora Lima)</p>
     </div>
 
     <!-- Services list -->
     <div class="space-y-3">
       <?php foreach ($services as $svc):
         $s = $statusMap[$svc['status']] ?? $statusMap['operational'];
+        $uptimePct = (float)($svc['uptime_pct'] ?? 0);
       ?>
       <div class="flex items-center justify-between p-5 bg-surface-card border border-surface-border rounded-xl
                   hover:border-brand-500/20 transition-colors animate-fade-in">
@@ -55,10 +57,10 @@ $page_title = 'Estado del Sistema';
         <div class="flex items-center gap-4">
           <div class="hidden sm:block text-right">
             <p class="text-xs text-gray-500">Uptime</p>
-            <p class="text-sm font-bold text-white"><?= number_format($svc['uptime_pct'],2) ?>%</p>
+            <p class="text-sm font-bold text-white"><?= number_format($uptimePct, 2) ?>%</p>
           </div>
           <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border <?= $s['class'] ?>">
-            <?= $s['label'] ?>
+            <?= e($s['label']) ?>
           </span>
         </div>
       </div>
@@ -68,14 +70,17 @@ $page_title = 'Estado del Sistema';
     <!-- Uptime summary bars -->
     <div class="mt-10 p-6 bg-surface-card border border-surface-border rounded-2xl">
       <h3 class="font-bold text-white mb-5 text-sm uppercase tracking-wider">Uptime promedio (30 días)</h3>
-      <?php foreach ($services as $svc): ?>
+      <?php foreach ($services as $svc):
+        $uptimePct = (float)($svc['uptime_pct'] ?? 0);
+        $barWidth  = min(100, max(0, $uptimePct));
+      ?>
       <div class="flex items-center gap-4 mb-3 last:mb-0">
         <div class="w-36 text-xs text-gray-400 truncate flex-shrink-0"><?= e($svc['name']) ?></div>
         <div class="flex-1 h-2 bg-surface rounded-full overflow-hidden">
           <div class="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-700"
-               style="width:<?= min(100, max(0, $svc['uptime_pct'])) ?>%"></div>
+               style="width:<?= $barWidth ?>%"></div>
         </div>
-        <div class="text-xs font-bold text-white w-16 text-right"><?= number_format($svc['uptime_pct'],2) ?>%</div>
+        <div class="text-xs font-bold text-white w-16 text-right"><?= number_format($uptimePct, 2) ?>%</div>
       </div>
       <?php endforeach; ?>
     </div>

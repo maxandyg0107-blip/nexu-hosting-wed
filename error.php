@@ -4,13 +4,19 @@
  */
 require_once __DIR__ . '/config/bootstrap.php';
 
-$code = (int)($_GET['code'] ?? 404);
 $messages = [
     403 => ['Acceso denegado',            'No tienes permiso para acceder a esta página.'],
     404 => ['Página no encontrada',       'La página que buscas no existe o fue eliminada.'],
     500 => ['Error del servidor',         'Ocurrió un error interno. Nuestro equipo ha sido notificado.'],
 ];
-[$title, $desc] = $messages[$code] ?? ['Error', 'Ocurrió un error inesperado.'];
+
+// No confiar en el código HTTP solicitado por el usuario: se valida contra
+// una whitelist explícita. Si no es uno de los códigos soportados, se
+// normaliza siempre a 404 (tanto el mensaje como el status real enviado).
+$requestedCode = (int)($_GET['code'] ?? 404);
+$code = array_key_exists($requestedCode, $messages) ? $requestedCode : 404;
+
+[$title, $desc] = $messages[$code];
 
 http_response_code($code);
 $page_title = "$code — $title";
@@ -20,7 +26,7 @@ $page_title = "$code — $title";
 <?php require_once __DIR__ . '/views/partials/navbar.php'; ?>
 <main class="flex-1 flex items-center justify-center px-4 py-24">
   <div class="text-center max-w-md animate-fade-in">
-    <div class="text-8xl font-black text-brand-600/30 mb-4"><?= $code ?></div>
+    <div class="text-8xl font-black text-brand-600/30 mb-4"><?= (int)$code ?></div>
     <h1 class="text-2xl font-extrabold text-white mb-3"><?= e($title) ?></h1>
     <p class="text-gray-400 mb-8"><?= e($desc) ?></p>
     <div class="flex flex-col sm:flex-row gap-3 justify-center">

@@ -1,6 +1,6 @@
 <?php
 $titulo = 'Preguntas Frecuentes';
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 
 $preguntas = [
     [
@@ -76,4 +76,4 @@ $preguntas = [
     </div>
 </section>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

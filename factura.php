@@ -3,14 +3,18 @@ require_once 'includes/funciones.php';
 
 if (!estaLogueado()) {
     redirigir('login.php');
+    exit;
 }
 
 $facturaId = intval($_GET['id'] ?? 0);
 $factura = obtenerFacturaCompleta($facturaId);
 
-if (!$factura || ($factura['usuario_id'] != $_SESSION['usuario_id'] && !esAdmin())) {
+$usuarioSesionId = (int)($_SESSION['usuario_id'] ?? 0);
+
+if (!$factura || ((int)$factura['usuario_id'] !== $usuarioSesionId && !esAdmin())) {
     setMensaje('Factura no encontrada.', 'danger');
     redirigir('panel.php?seccion=facturas');
+    exit;
 }
 
 $empresa = [

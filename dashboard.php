@@ -5,8 +5,30 @@
 require_once __DIR__ . '/config/bootstrap.php';
 requireLogin();
 
+/**
+ * Valida que una URL almacenada en BD use un scheme seguro antes de
+ * renderizarla como href. Evita que un panel_url malicioso (ej. javascript:)
+ * se ejecute al hacer clic, incluso si el valor ya pasó por e().
+ */
+function safeExternalUrl(?string $url): ?string
+{
+    if (!$url) {
+        return null;
+    }
+    $scheme = parse_url($url, PHP_URL_SCHEME);
+    if (!in_array(strtolower((string)$scheme), ['http', 'https'], true)) {
+        return null;
+    }
+    return $url;
+}
+
 $user    = currentUser();
+
+$validSections = ['overview', 'servers', 'orders', 'profile'];
 $section = sanitize($_GET['section'] ?? 'overview');
+if (!in_array($section, $validSections, true)) {
+    $section = 'overview';
+}
 
 $servers = (new ServerModel())->getByUser($user['id']);
 $orders  = (new OrderModel())->getByUser($user['id']);
@@ -55,12 +77,12 @@ $page_title = 'Mi Dashboard';
   foreach ($stats as $i => $s):
   ?>
   <div class="bg-surface-card border border-surface-border rounded-2xl p-5 animate-fade-in"
-       style="animation-delay:<?= $i * 0.08 ?>s">
+       style="animation-delay:<?= (float)($i * 0.08) ?>s">
     <div class="flex items-center justify-between mb-3">
       <span class="text-2xl"><?= $s['icon'] ?></span>
-      <span class="text-3xl font-extrabold text-white"><?= $s['val'] ?></span>
+      <span class="text-3xl font-extrabold text-white"><?= (int)$s['val'] ?></span>
     </div>
-    <p class="text-sm text-gray-400"><?= $s['label'] ?></p>
+    <p class="text-sm text-gray-400"><?= e($s['label']) ?></p>
   </div>
   <?php endforeach; ?>
 </div>
@@ -76,10 +98,10 @@ $page_title = 'Mi Dashboard';
   ];
   foreach ($tabs as $key => $tab):
   ?>
-  <a href="?section=<?= $key ?>"
+  <a href="?section=<?= urlencode($key) ?>"
      class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all
             <?= $section === $key ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/30' : 'text-gray-400 hover:text-white hover:bg-white/5' ?>">
-    <?= $tab['icon'] ?> <?= $tab['label'] ?>
+    <?= $tab['icon'] ?> <?= e($tab['label']) ?>
   </a>
   <?php endforeach; ?>
 </div>
@@ -103,7 +125,9 @@ $page_title = 'Mi Dashboard';
       </div>
     <?php else: ?>
       <div class="space-y-3">
-        <?php foreach (array_slice($activeServers, 0, 3, true) as $srv): ?>
+        <?php foreach (array_slice($activeServers, 0, 3, true) as $srv):
+          $panelUrl = safeExternalUrl($srv['panel_url'] ?? null);
+        ?>
         <div class="flex items-center justify-between p-3 bg-surface rounded-xl border border-surface-border">
           <div>
             <p class="font-medium text-white text-sm"><?= e($srv['server_name']) ?></p>
@@ -111,8 +135,8 @@ $page_title = 'Mi Dashboard';
           </div>
           <div class="flex items-center gap-2">
             <?= statusBadge($srv['status']) ?>
-            <?php if ($srv['panel_url']): ?>
-            <a href="<?= e($srv['panel_url']) ?>" target="_blank" rel="noopener"
+            <?php if ($panelUrl): ?>
+            <a href="<?= e($panelUrl) ?>" target="_blank" rel="noopener noreferrer"
                class="text-xs px-2.5 py-1 rounded-lg bg-brand-600/20 text-brand-400 border border-brand-500/30 hover:bg-brand-600/30 transition-colors font-medium">
               Panel
             </a>
@@ -136,10 +160,10 @@ $page_title = 'Mi Dashboard';
           <div class="flex items-center justify-between">
             <div>
               <p class="font-medium text-white text-sm"><?= e($ord['plan_name']) ?></p>
-              <p class="text-xs text-gray-500">Pedido el <?= formatDateTime($ord['created_at']) ?></p>
+              <p class="text-xs text-gray-500">Pedido el <?= e(formatDateTime($ord['created_at'])) ?></p>
             </div>
             <div class="text-right">
-              <p class="font-bold text-yellow-400">S/ <?= number_format($ord['amount_pen'],2) ?></p>
+              <p class="font-bold text-yellow-400">S/ <?= number_format((float)$ord['amount_pen'], 2) ?></p>
               <?= statusBadge($ord['status']) ?>
             </div>
           </div>
@@ -167,7 +191,9 @@ $page_title = 'Mi Dashboard';
       </a>
     </div>
   <?php else: ?>
-    <?php foreach ($servers as $srv): ?>
+    <?php foreach ($servers as $srv):
+      $panelUrl = safeExternalUrl($srv['panel_url'] ?? null);
+    ?>
     <div class="bg-surface-card border border-surface-border rounded-2xl p-6 animate-fade-in">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
         <div class="flex items-center gap-3">
@@ -181,8 +207,8 @@ $page_title = 'Mi Dashboard';
         </div>
         <div class="flex items-center gap-3">
           <?= statusBadge($srv['status']) ?>
-          <?php if ($srv['panel_url']): ?>
-          <a href="<?= e($srv['panel_url']) ?>" target="_blank" rel="noopener"
+          <?php if ($panelUrl): ?>
+          <a href="<?= e($panelUrl) ?>" target="_blank" rel="noopener noreferrer"
              class="px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:-translate-y-0.5 transition-transform shadow-lg shadow-brand-600/30">
             Abrir Panel Pterodactyl →
           </a>
@@ -193,9 +219,9 @@ $page_title = 'Mi Dashboard';
       <div class="grid grid-cols-3 gap-4">
         <?php
         $metrics = [
-          ['label'=>'RAM','val'=>$srv['ram_used_percent'],'color'=>'brand'],
-          ['label'=>'CPU','val'=>$srv['cpu_used_percent'],'color'=>'cyan'],
-          ['label'=>'Disco','val'=>$srv['disk_used_percent'],'color'=>'emerald'],
+          ['label'=>'RAM','val'=>(float)$srv['ram_used_percent'],'color'=>'brand'],
+          ['label'=>'CPU','val'=>(float)$srv['cpu_used_percent'],'color'=>'cyan'],
+          ['label'=>'Disco','val'=>(float)$srv['disk_used_percent'],'color'=>'emerald'],
         ];
         foreach ($metrics as $m):
           $barColor = match($m['color']) {
@@ -207,24 +233,25 @@ $page_title = 'Mi Dashboard';
           $textColor = match($m['color']) {
             'brand'=>'text-brand-400','cyan'=>'text-cyan-400','emerald'=>'text-emerald-400',default=>'text-gray-400'
           };
+          $barWidth = min(100, max(0, $m['val']));
         ?>
         <div>
           <div class="flex justify-between items-center mb-1.5">
-            <span class="text-xs text-gray-400"><?= $m['label'] ?></span>
-            <span class="text-xs font-bold <?= $textColor ?>"><?= $m['val'] ?>%</span>
+            <span class="text-xs text-gray-400"><?= e($m['label']) ?></span>
+            <span class="text-xs font-bold <?= $textColor ?>"><?= number_format($m['val'], 0) ?>%</span>
           </div>
           <div class="h-2 bg-surface rounded-full overflow-hidden">
             <div class="h-full rounded-full bg-gradient-to-r <?= $barColor ?> transition-all duration-700"
-                 style="width:<?= min(100, max(0, $m['val'])) ?>%"></div>
+                 style="width:<?= $barWidth ?>%"></div>
           </div>
         </div>
         <?php endforeach; ?>
       </div>
       <?php if ($srv['server_ip']): ?>
       <div class="mt-4 pt-4 border-t border-surface-border flex items-center gap-4 text-xs text-gray-500">
-        <span>IP: <code class="text-gray-300 font-mono"><?= e($srv['server_ip']) ?><?= $srv['server_port'] ? ':' . $srv['server_port'] : '' ?></code></span>
+        <span>IP: <code class="text-gray-300 font-mono"><?= e($srv['server_ip']) ?><?= $srv['server_port'] ? ':' . (int)$srv['server_port'] : '' ?></code></span>
         <?php if ($srv['expires_at']): ?>
-        <span>Vence: <span class="text-gray-300"><?= formatDate($srv['expires_at']) ?></span></span>
+        <span>Vence: <span class="text-gray-300"><?= e(formatDate($srv['expires_at'])) ?></span></span>
         <?php endif; ?>
       </div>
       <?php endif; ?>
@@ -262,9 +289,9 @@ $page_title = 'Mi Dashboard';
               <span class="block text-xs text-gray-500 capitalize"><?= e($ord['billing_cycle']) ?></span>
             </td>
             <td class="px-5 py-4 text-gray-400 capitalize"><?= e(str_replace('_',' ',$ord['payment_method'])) ?></td>
-            <td class="px-5 py-4 font-bold text-white">S/ <?= number_format($ord['amount_pen'],2) ?></td>
+            <td class="px-5 py-4 font-bold text-white">S/ <?= number_format((float)$ord['amount_pen'], 2) ?></td>
             <td class="px-5 py-4"><?= statusBadge($ord['status']) ?></td>
-            <td class="px-5 py-4 text-gray-500 text-xs"><?= formatDateTime($ord['created_at']) ?></td>
+            <td class="px-5 py-4 text-gray-500 text-xs"><?= e(formatDateTime($ord['created_at'])) ?></td>
           </tr>
           <?php if ($ord['status'] === 'rejected' && $ord['admin_notes']): ?>
           <tr class="bg-red-500/5">

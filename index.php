@@ -8,11 +8,20 @@ require_once __DIR__ . '/config/bootstrap.php';
 $planModel = new PlanModel();
 $featured  = array_filter($planModel->getAll(true), fn($p) => $p['is_featured']);
 
-$stmt      = db()->query("SELECT * FROM announcements WHERE is_published=1 ORDER BY published_at DESC LIMIT 3");
-$news      = $stmt->fetchAll();
+// Consultas migradas a sentencias preparadas (defensa en profundidad,
+// aunque hoy no reciben input de usuario, evita el patrón inseguro
+// de copiar/pegar query() crudas si en el futuro se agregan filtros).
+$stmt = db()->prepare(
+    "SELECT * FROM announcements WHERE is_published = :published ORDER BY published_at DESC LIMIT :limit"
+);
+$stmt->bindValue(':published', 1, PDO::PARAM_INT);
+$stmt->bindValue(':limit', 3, PDO::PARAM_INT);
+$stmt->execute();
+$news = $stmt->fetchAll();
 
-$stmt2     = db()->query("SELECT * FROM service_status ORDER BY type DESC, name ASC");
-$services  = $stmt2->fetchAll();
+$stmt2 = db()->prepare("SELECT * FROM service_status ORDER BY type DESC, name ASC");
+$stmt2->execute();
+$services = $stmt2->fetchAll();
 
 $allOperational = !in_array(false, array_map(fn($s) => $s['status'] === 'operational', $services), true);
 
@@ -75,8 +84,8 @@ $meta_description = 'Nexu Hosting — Servidores Minecraft y Web Hosting desde S
       <div class="flex gap-8 flex-wrap">
         <?php foreach ([['99.9%','Uptime garantizado'],['< 2h','Activación del servicio'],['24/7','Soporte en español']] as $s): ?>
         <div>
-          <div class="text-2xl font-extrabold text-white"><?= $s[0] ?></div>
-          <div class="text-xs text-gray-500 mt-0.5"><?= $s[1] ?></div>
+          <div class="text-2xl font-extrabold text-white"><?= e($s[0]) ?></div>
+          <div class="text-xs text-gray-500 mt-0.5"><?= e($s[1]) ?></div>
         </div>
         <?php endforeach; ?>
       </div>
@@ -89,7 +98,7 @@ $meta_description = 'Nexu Hosting — Servidores Minecraft y Web Hosting desde S
         <div class="grid grid-cols-2 gap-3">
           <?php foreach (PAYMENT_CONFIG as $method): ?>
           <div class="flex items-center gap-3 p-3 bg-surface rounded-xl border border-surface-border hover:border-brand-500/30 transition-colors">
-            <span class="text-2xl"><?= $method['icon'] ?></span>
+            <span class="text-2xl"><?= e($method['icon']) ?></span>
             <div>
               <p class="text-sm font-semibold text-white"><?= e($method['label']) ?></p>
               <?php if (isset($method['phone'])): ?>
@@ -134,13 +143,13 @@ $meta_description = 'Nexu Hosting — Servidores Minecraft y Web Hosting desde S
       ?>
       <div class="group p-6 bg-surface-card border border-surface-border rounded-2xl
                   hover:border-brand-500/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-600/5
-                  transition-all duration-300 animate-fade-in" style="animation-delay:<?= $i*0.07 ?>s"
+                  transition-all duration-300 animate-fade-in" style="animation-delay:<?= (float)($i*0.07) ?>s"
            data-animate>
         <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-600/20 to-cyan-500/10 border border-brand-500/20 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
-          <?= $f[0] ?>
+          <?= e($f[0]) ?>
         </div>
-        <h3 class="font-bold text-white mb-2"><?= $f[1] ?></h3>
-        <p class="text-sm text-gray-400 leading-relaxed"><?= $f[2] ?></p>
+        <h3 class="font-bold text-white mb-2"><?= e($f[1]) ?></h3>
+        <p class="text-sm text-gray-400 leading-relaxed"><?= e($f[2]) ?></p>
       </div>
       <?php endforeach; ?>
     </div>
@@ -161,10 +170,10 @@ $meta_description = 'Nexu Hosting — Servidores Minecraft y Web Hosting desde S
         <?php foreach (SUPPORTED_CURRENCIES as $cur): ?>
         <form method="POST" action="/auth/currency.php" class="inline">
           <?= csrfField() ?>
-          <input type="hidden" name="currency" value="<?= $cur ?>">
+          <input type="hidden" name="currency" value="<?= e($cur) ?>">
           <button type="submit" class="px-3 py-1 rounded-full text-xs font-bold transition-all
                   <?= activeCurrency() === $cur ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-white' ?>">
-            <?= $cur ?>
+            <?= e($cur) ?>
           </button>
         </form>
         <?php endforeach; ?>
@@ -174,10 +183,11 @@ $meta_description = 'Nexu Hosting — Servidores Minecraft y Web Hosting desde S
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <?php foreach (array_slice($featured, 0, 3) as $i => $plan):
         $feats = json_decode($plan['features'] ?? '[]', true);
+        if (!is_array($feats)) { $feats = []; }
       ?>
       <div class="relative flex flex-col bg-surface-card border border-brand-500/30 rounded-2xl overflow-hidden
                   shadow-xl shadow-brand-600/10 hover:-translate-y-2 hover:shadow-brand-600/20
-                  transition-all duration-300 animate-fade-in" style="animation-delay:<?= $i*0.1 ?>s">
+                  transition-all duration-300 animate-fade-in" style="animation-delay:<?= (float)($i*0.1) ?>s">
         <div class="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-brand-600 via-brand-400 to-cyan-500"></div>
         <div class="absolute top-4 right-4">
           <span class="px-2.5 py-1 rounded-full bg-brand-600/20 border border-brand-500/30 text-brand-400 text-xs font-bold uppercase">Popular</span>
@@ -186,13 +196,13 @@ $meta_description = 'Nexu Hosting — Servidores Minecraft y Web Hosting desde S
           <h3 class="text-xl font-extrabold text-white mb-1"><?= e($plan['name']) ?></h3>
           <p class="text-xs text-gray-500 capitalize mb-4"><?= e($plan['plan_type']) ?> Hosting</p>
           <div class="mb-5">
-            <div class="text-4xl font-black text-white"><?= priceInCurrency($plan['price_pen']) ?></div>
+            <div class="text-4xl font-black text-white"><?= e(priceInCurrency($plan['price_pen'])) ?></div>
             <div class="text-xs text-gray-500 mt-0.5">por mes</div>
           </div>
           <div class="flex gap-2 flex-wrap mb-5">
-            <span class="px-2 py-1 rounded-lg bg-brand-600/10 border border-brand-500/20 text-brand-400 text-xs font-semibold"><?= $plan['ram_gb'] ?>GB RAM</span>
-            <span class="px-2 py-1 rounded-lg bg-cyan-600/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold"><?= $plan['cpu_cores'] ?> vCPU</span>
-            <span class="px-2 py-1 rounded-lg bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold"><?= $plan['disk_gb'] ?>GB SSD</span>
+            <span class="px-2 py-1 rounded-lg bg-brand-600/10 border border-brand-500/20 text-brand-400 text-xs font-semibold"><?= (int)$plan['ram_gb'] ?>GB RAM</span>
+            <span class="px-2 py-1 rounded-lg bg-cyan-600/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold"><?= (int)$plan['cpu_cores'] ?> vCPU</span>
+            <span class="px-2 py-1 rounded-lg bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold"><?= (int)$plan['disk_gb'] ?>GB SSD</span>
           </div>
           <ul class="space-y-2">
             <?php foreach (array_slice($feats, 0, 5) as $f): ?>
@@ -204,7 +214,7 @@ $meta_description = 'Nexu Hosting — Servidores Minecraft y Web Hosting desde S
           </ul>
         </div>
         <div class="px-7 pb-7">
-          <a href="/planes.php?slug=<?= e($plan['slug']) ?>"
+          <a href="/planes.php?slug=<?= urlencode($plan['slug']) ?>"
              class="w-full flex items-center justify-center py-3 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500
                     text-white font-bold shadow-lg shadow-brand-600/30 hover:shadow-brand-600/50 hover:-translate-y-0.5 transition-all">
             Contratar ahora →
@@ -257,7 +267,7 @@ $meta_description = 'Nexu Hosting — Servidores Minecraft y Web Hosting desde S
             <td class="px-6 py-4">
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg <?= $highlight ? 'bg-gradient-to-br from-brand-600 to-cyan-500' : 'bg-surface border border-surface-border' ?> flex items-center justify-center text-xs font-bold text-white">
-                  <?= mb_strtoupper(mb_substr($name, 0, 1)) ?>
+                  <?= e(mb_strtoupper(mb_substr($name, 0, 1))) ?>
                 </div>
                 <span class="font-semibold <?= $highlight ? 'text-white' : 'text-gray-400' ?>"><?= e($name) ?></span>
                 <?php if ($highlight): ?><span class="px-2 py-0.5 rounded-full bg-brand-600/20 text-brand-400 text-xs font-bold border border-brand-500/30">Mejor valor</span><?php endif; ?>
@@ -286,10 +296,10 @@ $meta_description = 'Nexu Hosting — Servidores Minecraft y Web Hosting desde S
     </div>
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
       <?php foreach ($news as $i => $n): ?>
-      <article class="bg-surface-card border border-surface-border rounded-2xl p-6 hover:border-brand-500/30 hover:-translate-y-1 transition-all duration-300 animate-fade-in" style="animation-delay:<?= $i*0.1 ?>s" data-animate>
+      <article class="bg-surface-card border border-surface-border rounded-2xl p-6 hover:border-brand-500/30 hover:-translate-y-1 transition-all duration-300 animate-fade-in" style="animation-delay:<?= (float)($i*0.1) ?>s" data-animate>
         <div class="flex items-center justify-between mb-3">
           <?php if ($n['is_featured']): ?><span class="px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 text-xs font-semibold">Destacado</span><?php else: ?><span></span><?php endif; ?>
-          <span class="text-xs text-gray-600"><?= formatDate($n['published_at'] ?? $n['created_at']) ?></span>
+          <span class="text-xs text-gray-600"><?= e(formatDate($n['published_at'] ?? $n['created_at'])) ?></span>
         </div>
         <h3 class="font-bold text-white mb-2 line-clamp-2"><?= e($n['title']) ?></h3>
         <p class="text-sm text-gray-400 line-clamp-3"><?= e(strip_tags($n['excerpt'] ?? substr($n['content'],0,150))) ?></p>
