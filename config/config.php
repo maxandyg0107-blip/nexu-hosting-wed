@@ -13,11 +13,11 @@ define('APP_NAME',   'Nexu Hosting');
 define('APP_URL',    rtrim(getenv('APP_URL') ?: 'https://nexuhosting.com', '/'));
 
 // ── Base de datos ─────────────────────────────────────────────
-$db_host = $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? getenv('DB_HOST') ?? $_ENV['MYSQL_ADDON_HOST'] ?? $_SERVER['MYSQL_ADDON_HOST'] ?? getenv('MYSQL_ADDON_HOST') ?: 'bcd5w0wuqpzy7rqbcfw-mysql.services.clever-cloud.com';
+$db_host = $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? getenv('DB_HOST') ?? $_ENV['MYSQL_ADDON_HOST'] ?? $_SERVER['MYSQL_ADDON_HOST'] ?? getenv('MYSQL_ADDON_HOST') ?: 'bhn3opeyfr7d8hhaxpsj-mysql.services.clever-cloud.com';
 $db_port = $_ENV['DB_PORT'] ?? $_SERVER['DB_PORT'] ?? getenv('DB_PORT') ?? $_ENV['MYSQL_ADDON_PORT'] ?? $_SERVER['MYSQL_ADDON_PORT'] ?? getenv('MYSQL_ADDON_PORT') ?: '3306';
-$db_name = $_ENV['DB_NAME'] ?? $_SERVER['DB_NAME'] ?? getenv('DB_NAME') ?? $_ENV['MYSQL_ADDON_DB']   ?? $_SERVER['MYSQL_ADDON_DB']   ?? getenv('MYSQL_ADDON_DB')   ?: 'bcd5w0wuqpzy7rqbcfw';
-$db_user = $_ENV['DB_USER'] ?? $_SERVER['DB_USER'] ?? getenv('DB_USER') ?? $_ENV['MYSQL_ADDON_USER'] ?? $_SERVER['MYSQL_ADDON_USER'] ?? getenv('MYSQL_ADDON_USER') ?: 'udtolymxjjotggmt';
-$db_pass = $_ENV['DB_PASS'] ?? $_SERVER['DB_PASS'] ?? getenv('DB_PASS') ?? $_ENV['MYSQL_ADDON_PASSWORD'] ?? $_SERVER['MYSQL_ADDON_PASSWORD'] ?? getenv('MYSQL_ADDON_PASSWORD') ?: 'mHJPYaMpaFOtxDdA1DlG';
+$db_name = $_ENV['DB_NAME'] ?? $_SERVER['DB_NAME'] ?? getenv('DB_NAME') ?? $_ENV['MYSQL_ADDON_DB']   ?? $_SERVER['MYSQL_ADDON_DB']   ?? getenv('MYSQL_ADDON_DB')   ?: 'bhn3opeyfr7d8hhaxpsj';
+$db_user = $_ENV['DB_USER'] ?? $_SERVER['DB_USER'] ?? getenv('DB_USER') ?? $_ENV['MYSQL_ADDON_USER'] ?? $_SERVER['MYSQL_ADDON_USER'] ?? getenv('MYSQL_ADDON_USER') ?: 'uzasgvvixdrvhsnj';
+$db_pass = $_ENV['DB_PASS'] ?? $_SERVER['DB_PASS'] ?? getenv('DB_PASS') ?? $_ENV['MYSQL_ADDON_PASSWORD'] ?? $_SERVER['MYSQL_ADDON_PASSWORD'] ?? getenv('MYSQL_ADDON_PASSWORD') ?: 'o3altpkx4NOL2ocUTh7v';
 
 define('DB_HOST',    $db_host);
 define('DB_PORT',    $db_port);
