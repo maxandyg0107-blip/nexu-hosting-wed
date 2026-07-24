@@ -118,5 +118,191 @@
     });
   }, 5000);
 </script>
+
+<!-- ══════════════════════════════════════════════════════════
+     WIDGET FLOTANTE: WhatsApp + Live Chat (Botones apilados)
+     ══════════════════════════════════════════════════════════ -->
+<style>
+  @keyframes waBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+  @keyframes chatSlideIn{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+  .wa-btn{animation:waBounce 2.5s ease-in-out infinite}
+  .chat-box{animation:chatSlideIn .25s ease-out}
+  /* Burbuja de notificación */
+  .wa-badge{animation:ping 1.2s cubic-bezier(0,0,.2,1) infinite}
+</style>
+
+<!-- Contenedor flotante (esquina inferior derecha) -->
+<div id="floatWidget"
+     class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3"
+     role="complementary" aria-label="Soporte rápido">
+
+  <!-- ── Caja de chat en vivo (oculta por defecto) ───────── -->
+  <div id="chatBox"
+       class="chat-box hidden w-80 bg-surface-card border border-surface-border rounded-2xl shadow-2xl shadow-black/60 overflow-hidden">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-4 py-3.5 bg-gradient-to-r from-brand-700 to-brand-600">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-black text-sm text-white">N</div>
+        <div>
+          <p class="text-sm font-bold text-white">Nexu Hosting</p>
+          <div class="flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-xs text-brand-200">En línea · Responde en ~5 min</span>
+          </div>
+        </div>
+      </div>
+      <button onclick="toggleChat()" class="text-white/70 hover:text-white transition-colors p-1" aria-label="Cerrar chat">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mensaje de bienvenida -->
+    <div class="p-4 bg-surface/50">
+      <div class="flex items-start gap-3">
+        <div class="w-7 h-7 rounded-full bg-brand-600/30 border border-brand-500/30 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">🤖</div>
+        <div class="bg-surface-hover border border-surface-border rounded-2xl rounded-tl-none px-4 py-3 text-sm text-gray-300 leading-relaxed max-w-[220px]">
+          ¡Hola! 👋 ¿En qué puedo ayudarte hoy?
+        </div>
+      </div>
+    </div>
+
+    <!-- Opciones rápidas -->
+    <div class="px-4 pb-2 space-y-2">
+      <?php
+      $chatOptions = [
+        ['💰', 'Consultar precios',         'Quiero saber los precios de sus planes de Minecraft y Hosting.'],
+        ['🎮', 'Soporte técnico',            'Necesito ayuda técnica con mi servidor.'],
+        ['💳', 'Estado de pago',             'Quiero consultar el estado de mi pago/pedido.'],
+        ['🆕', 'Contratar un plan',          'Me interesa contratar un plan de hosting.'],
+      ];
+      foreach ($chatOptions as [$icon, $label, $msg]):
+        $waUrl = 'https://wa.me/' . WHATSAPP_NUMBER . '?text=' . urlencode($msg);
+      ?>
+      <a href="<?= e($waUrl) ?>" target="_blank" rel="noopener"
+         class="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl bg-surface border border-surface-border
+                text-sm text-gray-300 hover:text-white hover:border-brand-500/40 hover:bg-surface-hover
+                transition-all group/opt text-left">
+        <span class="text-base"><?= $icon ?></span>
+        <span class="flex-1"><?= e($label) ?></span>
+        <svg class="w-3.5 h-3.5 text-gray-600 group-hover/opt:text-brand-400 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+      <?php endforeach; ?>
+    </div>
+
+    <!-- Input (abre WhatsApp al enviar) -->
+    <div class="p-4 border-t border-surface-border">
+      <form id="chatForm" onsubmit="sendToWhatsApp(event)" class="flex gap-2">
+        <input type="text" id="chatInput"
+               placeholder="Escribe tu mensaje..."
+               class="flex-1 px-3 py-2 rounded-xl bg-surface border border-surface-border text-white text-sm
+                      placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-all">
+        <button type="submit"
+                class="p-2.5 rounded-xl bg-brand-600 text-white hover:bg-brand-500 transition-colors flex-shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+          </svg>
+        </button>
+      </form>
+      <p class="text-xs text-gray-600 mt-2 text-center">
+        Redirige a WhatsApp. También puedes contactarnos en
+        <a href="https://discord.gg/nexuhosting" target="_blank" class="text-brand-400 hover:underline">Discord</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Botón WhatsApp directo ───────────────────────────── -->
+  <a href="https://wa.me/<?= WHATSAPP_NUMBER ?>?text=<?= WHATSAPP_MESSAGE ?>"
+     target="_blank" rel="noopener noreferrer"
+     class="wa-btn relative flex items-center justify-center w-14 h-14 rounded-full shadow-2xl shadow-green-500/40
+            bg-[#25D366] hover:bg-[#20bd5a] hover:-translate-y-1 hover:shadow-green-500/60
+            transition-all duration-200 group"
+     aria-label="Contactar por WhatsApp">
+    <!-- Badge de notificación -->
+    <span class="absolute -top-1 -right-1 flex h-4 w-4" aria-hidden="true">
+      <span class="wa-badge absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+      <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500 items-center justify-center text-[9px] text-white font-bold">1</span>
+    </span>
+    <!-- WhatsApp icon -->
+    <svg class="w-7 h-7 text-white group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+    </svg>
+  </a>
+
+  <!-- ── Botón Live Chat ──────────────────────────────────── -->
+  <button onclick="toggleChat()" id="chatToggleBtn"
+          class="relative flex items-center justify-center w-14 h-14 rounded-full shadow-2xl shadow-brand-600/40
+                 bg-gradient-to-br from-brand-600 to-brand-500
+                 hover:from-brand-500 hover:to-brand-400 hover:-translate-y-1 hover:shadow-brand-600/60
+                 transition-all duration-200 group"
+          aria-label="Abrir chat de soporte">
+    <!-- Icono de chat -->
+    <svg id="chatIconOpen" class="w-6 h-6 text-white group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+    </svg>
+    <!-- Icono de X (visible cuando chat está abierto) -->
+    <svg id="chatIconClose" class="w-6 h-6 text-white group-hover:scale-110 transition-transform hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+    </svg>
+    <!-- Badge indicador -->
+    <span id="chatBadge"
+          class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 border-2 border-surface rounded-full text-[9px] text-white font-bold flex items-center justify-center">
+      1
+    </span>
+  </button>
+</div>
+
+<script>
+/* ── WhatsApp + Live Chat Widget ─────────────────────────── */
+const chatBox  = document.getElementById('chatBox');
+const iconOpen = document.getElementById('chatIconOpen');
+const iconClose= document.getElementById('chatIconClose');
+const badge    = document.getElementById('chatBadge');
+let chatOpen   = false;
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+
+  if (chatOpen) {
+    chatBox.classList.remove('hidden');
+    iconOpen.classList.add('hidden');
+    iconClose.classList.remove('hidden');
+    badge?.remove(); // quitar badge al abrir
+    // Re-aplicar animación
+    chatBox.style.animation = 'none';
+    void chatBox.offsetWidth;
+    chatBox.style.animation = '';
+    chatBox.classList.add('chat-box');
+  } else {
+    chatBox.classList.add('hidden');
+    iconOpen.classList.remove('hidden');
+    iconClose.classList.add('hidden');
+  }
+}
+
+function sendToWhatsApp(e) {
+  e.preventDefault();
+  const input = document.getElementById('chatInput');
+  const msg   = input.value.trim();
+  if (!msg) return;
+  const waUrl = `https://wa.me/<?= WHATSAPP_NUMBER ?>?text=${encodeURIComponent(msg)}`;
+  window.open(waUrl, '_blank', 'noopener,noreferrer');
+  input.value = '';
+}
+
+// Mostrar chat automáticamente después de 30 segundos (primera visita)
+if (!sessionStorage.getItem('nx_chat_shown')) {
+  setTimeout(() => {
+    if (!chatOpen) {
+      toggleChat();
+      sessionStorage.setItem('nx_chat_shown', '1');
+    }
+  }, 30000);
+}
+</script>
 </body>
 </html>

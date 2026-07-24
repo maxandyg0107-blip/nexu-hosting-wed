@@ -1,25 +1,26 @@
 <?php
 /**
- * Nexu Hosting - Configuración de Base de Datos
- * Edita estos datos con tus credenciales de MySQL
+ * Nexu Hosting - Compatibilidad para el código legado.
+ * Las credenciales se leen desde config/config.php y variables de entorno.
  */
 
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'nexuhosting');
+require_once dirname(__DIR__) . '/config/config.php';
 
 try {
     $pdo = new PDO(
-        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+        "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET,
         DB_USER,
         DB_PASS,
         [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::ATTR_PERSISTENT => false,
+            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
         ]
     );
 } catch (PDOException $e) {
-    die("Error de conexión a la base de datos: " . $e->getMessage());
+    error_log('[NEXU DB ERROR] ' . $e->getMessage());
+    http_response_code(503);
+    exit('El servicio no está disponible temporalmente.');
 }
